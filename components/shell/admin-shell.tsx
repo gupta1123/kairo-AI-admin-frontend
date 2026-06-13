@@ -6,11 +6,14 @@ import {
   BarChart3,
   Gauge,
   KeyRound,
+  LogOut,
   Menu,
   Search,
   ShieldCheck,
   UsersRound
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -22,6 +25,19 @@ const navItems = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  if (pathname === "/login") {
+    return <>{children}</>;
+  }
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+    router.replace("/login");
+    router.refresh();
+  }
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -93,8 +109,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 Search users, codes, campaigns
               </div>
               <div className="flex h-9 w-9 items-center justify-center rounded-md bg-teal-700 text-xs font-black text-white">
-                VA
+                AD
               </div>
+              <button
+                aria-label="Sign out"
+                className="flex h-9 w-9 items-center justify-center rounded-md border border-stone-200 text-stone-600 transition hover:bg-stone-100 hover:text-stone-950 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={loggingOut}
+                onClick={handleLogout}
+                type="button"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           </div>
 

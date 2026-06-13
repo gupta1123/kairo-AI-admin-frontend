@@ -9,6 +9,7 @@ import {
   RedeemCodeSummary,
   UserListFilters
 } from "./types";
+import { getAdminAccessToken } from "./admin-session";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -124,8 +125,7 @@ async function adminApiFetch<T>(
   init: RequestInit = {}
 ): Promise<T> {
   const baseUrl = getAdminApiBaseUrl();
-  const token = getAdminApiBearerToken();
-  const internalToken = getAdminApiInternalToken();
+  const token = (await getAdminAccessToken()) || getAdminApiBearerToken();
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     cache: "no-store",
@@ -133,7 +133,6 @@ async function adminApiFetch<T>(
       Accept: "application/json",
       ...(init.body ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(internalToken ? { "x-admin-internal-token": internalToken } : {}),
       ...init.headers
     }
   });
@@ -150,7 +149,7 @@ async function adminApiFetch<T>(
   return data as T;
 }
 
-function getAdminApiBaseUrl() {
+export function getAdminApiBaseUrl() {
   const value =
     process.env.ADMIN_API_URL ||
     process.env.NEXT_PUBLIC_ADMIN_API_URL ||
@@ -165,10 +164,6 @@ function getAdminApiBearerToken() {
     process.env.SUPABASE_ADMIN_ACCESS_TOKEN ||
     ""
   ).trim();
-}
-
-function getAdminApiInternalToken() {
-  return (process.env.ADMIN_API_INTERNAL_TOKEN || "").trim();
 }
 
 function buildSearchParams(values: Record<string, unknown>) {
