@@ -125,6 +125,7 @@ async function adminApiFetch<T>(
 ): Promise<T> {
   const baseUrl = getAdminApiBaseUrl();
   const token = getAdminApiBearerToken();
+  const internalToken = getAdminApiInternalToken();
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     cache: "no-store",
@@ -132,6 +133,7 @@ async function adminApiFetch<T>(
       Accept: "application/json",
       ...(init.body ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(internalToken ? { "x-admin-internal-token": internalToken } : {}),
       ...init.headers
     }
   });
@@ -163,6 +165,10 @@ function getAdminApiBearerToken() {
     process.env.SUPABASE_ADMIN_ACCESS_TOKEN ||
     ""
   ).trim();
+}
+
+function getAdminApiInternalToken() {
+  return (process.env.ADMIN_API_INTERNAL_TOKEN || "").trim();
 }
 
 function buildSearchParams(values: Record<string, unknown>) {
