@@ -33,10 +33,21 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   async function handleLogout() {
+    if (loggingOut) {
+      return;
+    }
+
     setLoggingOut(true);
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
-    router.replace("/login");
-    router.refresh();
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.replace("/login");
+      router.refresh();
+      window.setTimeout(() => {
+        window.location.assign("/login");
+      }, 500);
+    } catch {
+      setLoggingOut(false);
+    }
   }
 
   return (
