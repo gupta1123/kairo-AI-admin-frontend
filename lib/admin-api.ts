@@ -6,10 +6,12 @@ import {
   ListResponse,
   RedeemCodeDetail,
   RedeemCodeListFilters,
+  RedeemCodePlanId,
   RedeemCodeSummary,
   UserListFilters
 } from "./types";
 import { getAdminAccessToken } from "./admin-session";
+import { getRedeemCodePlan } from "./redeem-code-plans";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -74,14 +76,19 @@ export async function getRedeemCodeDetail(
   }
 }
 
-export async function createRedeemCode(): Promise<GeneratedRedeemCode> {
+export async function createRedeemCode({
+  planId = "pro_monthly"
+}: {
+  planId?: RedeemCodePlanId;
+} = {}): Promise<GeneratedRedeemCode> {
+  const plan = getRedeemCodePlan(planId);
   const data = await adminApiFetch<{
     code: string;
     redeemCode: RedeemCodeSummary;
   }>("/api/admin/redeem-codes", {
     body: JSON.stringify({
-      durationDays: 30,
-      planId: "pro_monthly"
+      durationDays: plan.durationDays,
+      planId
     }),
     method: "POST"
   });

@@ -1,50 +1,86 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { KeyRound, Loader2, Plus, X } from "lucide-react";
+import { CalendarDays, KeyRound, Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { GeneratedRedeemCode } from "@/lib/types";
+import { getRedeemCodeGrantLabel, redeemCodePlans } from "@/lib/redeem-code-plans";
+import type { GeneratedRedeemCode, RedeemCodePlanId } from "@/lib/types";
 import { GeneratedCodeCopyBox } from "./generated-code-copy-box";
 
 export function RedeemCodeCreateDialog() {
   const [open, setOpen] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<GeneratedRedeemCode | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [refreshAfterClose, setRefreshAfterClose] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] =
+    useState<RedeemCodePlanId>("pro_monthly");
   const router = useRouter();
 
-  function generateCode() {
-    startTransition(async () => {
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+
+    if (!nextOpen) {
+      setGeneratedCode(null);
       setError(null);
+      setRefreshAfterClose(false);
+
+      if (refreshAfterClose) {
+        router.refresh();
+      }
+    }
+  }
+
+  async function generateCode() {
+    if (isGenerating) {
+      return;
+    }
+
+    setError(null);
+    setIsGenerating(true);
+
+    try {
       const response = await fetch("/api/admin/redeem-codes", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          planId: selectedPlanId
+        })
       });
-      const result = await response.json();
+      const result = await response.json().catch(() => null);
 
       if (!response.ok) {
         setError(result?.error || "Could not create redeem code.");
         return;
       }
 
+      if (!result?.plaintextCode) {
+        setError("The API created a code but did not return the plaintext value.");
+        return;
+      }
+
       setGeneratedCode(result);
-      router.refresh();
-    });
+      setRefreshAfterClose(true);
+    } catch {
+      setError("Could not create redeem code. Check the API connection and try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   return (
     <Dialog.Root
       open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen);
-        if (!nextOpen) {
-          setGeneratedCode(null);
-          setError(null);
-        }
-      }}
+      onOpenChange={handleOpenChange}
     >
       <Dialog.Trigger asChild>
-        <button className="inline-flex h-10 items-center gap-2 rounded-md bg-teal-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-teal-800">
+        <button
+          className="inline-flex h-10 items-center gap-2 rounded-md bg-teal-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-teal-800"
+          type="button"
+        >
           <Plus className="h-4 w-4" />
           Create code
         </button>
@@ -58,10 +94,13 @@ export function RedeemCodeCreateDialog() {
                 Create redeem code
               </Dialog.Title>
               <Dialog.Description className="mt-2 text-sm font-medium leading-6 text-stone-600">
-                Generate a one-time code that grants 30 days of Pro after signed-in redemption.
+                Generate a one-time Pro code for monthly or yearly access.
               </Dialog.Description>
             </div>
-            <Dialog.Close className="flex h-8 w-8 items-center justify-center rounded-md text-stone-500 hover:bg-stone-100">
+            <Dialog.Close
+              className="flex h-8 w-8 items-center justify-center rounded-md text-stone-500 hover:bg-stone-100"
+              aria-label="Close"
+            >
               <X className="h-4 w-4" />
             </Dialog.Close>
           </div>
@@ -73,13 +112,58 @@ export function RedeemCodeCreateDialog() {
                   <KeyRound className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-black text-stone-950">Pro Monthly grant</div>
-                  <div className="text-sm font-medium text-stone-500">Duration: 30 days, one use globally</div>
+                  <div className="text-sm font-black text-stone-950">
+                    Select grant type
+                  </div>
+                  <div className="text-sm font-medium text-stone-500">
+                    One use globally, shown in plaintext once.
+                  </div>
                 </div>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {(Object.keys(redeemCodePlans) as RedeemCodePlanId[]).map((planId) => {
+                  const plan = redeemCodePlans[planId];
+                  const selected = selectedPlanId === planId;
+
+                  return (
+                    <button
+                      key={planId}
+                      className={`rounded-md border px-3 py-3 text-left transition ${
+                        selected
+                          ? "border-teal-700 bg-white ring-2 ring-teal-100"
+                          : "border-stone-200 bg-white hover:border-stone-300"
+                      }`}
+                      onClick={() => setSelectedPlanId(planId)}
+                      type="button"
+                    >
+                      <span className="flex items-center gap-2 text-sm font-black text-stone-950">
+                        <CalendarDays
+                          className={`h-4 w-4 ${
+                            selected ? "text-teal-700" : "text-stone-400"
+                          }`}
+                        />
+                        {plan.label}
+                      </span>
+                      <span className="mt-1 block text-xs font-semibold text-stone-500">
+                        {plan.durationDays} days Pro access
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {generatedCode ? <GeneratedCodeCopyBox code={generatedCode.plaintextCode} /> : null}
+            {generatedCode ? (
+              <div className="rounded-md border border-teal-100 bg-teal-50 px-3 py-2 text-sm font-bold text-teal-900">
+                Generated{" "}
+                {getRedeemCodeGrantLabel({
+                  durationDays: generatedCode.record.durationDays,
+                  planGrant: generatedCode.record.planGrant
+                })}
+              </div>
+            ) : null}
             {error ? (
               <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">
                 {error}
@@ -92,11 +176,11 @@ export function RedeemCodeCreateDialog() {
               </Dialog.Close>
               <button
                 className="inline-flex h-10 items-center gap-2 rounded-md bg-stone-950 px-4 text-sm font-black text-white disabled:opacity-60"
-                disabled={isPending}
+                disabled={isGenerating}
                 onClick={generateCode}
                 type="button"
               >
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                 {generatedCode ? "Generate another" : "Generate code"}
               </button>
             </div>

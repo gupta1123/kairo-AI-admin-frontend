@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { DataTable, TableCell } from "@/components/common/data-table";
 import { StatusBadge } from "@/components/common/status-badge";
+import { getRedeemCodeGrantLabel, getRedeemCodePlan } from "@/lib/redeem-code-plans";
 import type { RedeemCodeSummary } from "@/lib/types";
 import { formatDate, formatDateTime } from "@/lib/utils";
 
@@ -20,8 +21,12 @@ export function RedeemCodesTable({ codes }: { codes: RedeemCodeSummary[] }) {
             <StatusBadge label={code.status} tone={code.status} />
           </TableCell>
           <TableCell>
-            <div className="font-bold text-stone-800">30 days Pro</div>
-            <div className="text-xs font-semibold text-stone-500">{code.planGrant}</div>
+            <div className="font-bold text-stone-800">
+              {getRedeemCodePlan(code.planGrant).label}
+            </div>
+            <div className="text-xs font-semibold text-stone-500">
+              {getRedeemCodeGrantLabel(code)}
+            </div>
           </TableCell>
           <TableCell className="text-stone-600">{formatDate(code.createdAt)}</TableCell>
           <TableCell className="text-stone-600">{formatDate(code.expiresAt)}</TableCell>

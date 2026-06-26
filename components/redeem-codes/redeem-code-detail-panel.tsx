@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Clock3, KeyRound, ShieldCheck, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { StatusBadge } from "@/components/common/status-badge";
+import { getRedeemCodeGrantLabel } from "@/lib/redeem-code-plans";
 import type { RedeemCodeDetail } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 
@@ -22,7 +23,11 @@ export function RedeemCodeDetailPanel({ code }: { code: RedeemCodeDetail }) {
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <InfoTile icon={KeyRound} label="Grant" value="30 days Pro access" />
+          <InfoTile
+            icon={KeyRound}
+            label="Grant"
+            value={getRedeemCodeGrantLabel(code)}
+          />
           <InfoTile icon={Clock3} label="Expires" value={formatDateTime(code.expiresAt)} />
           <InfoTile icon={ShieldCheck} label="Created by" value={code.createdBy} />
           <InfoTile icon={UserRound} label="Redemption" value={code.redemption?.userName || "Not redeemed"} />

@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 
 import { createRedeemCode } from "@/lib/admin-api";
+import { redeemCodePlans } from "@/lib/redeem-code-plans";
+import type { RedeemCodePlanId } from "@/lib/types";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    return NextResponse.json(await createRedeemCode(), { status: 201 });
+    const body = await request.json().catch(() => null);
+    const planId = normalizePlanId(body?.planId);
+
+    return NextResponse.json(await createRedeemCode({ planId }), { status: 201 });
   } catch (error) {
     return NextResponse.json(
       {
@@ -16,6 +21,13 @@ export async function POST() {
       { status: getStatusCode(error) }
     );
   }
+}
+
+function normalizePlanId(value: unknown): RedeemCodePlanId {
+  const planId = String(value || "").trim();
+  return Object.prototype.hasOwnProperty.call(redeemCodePlans, planId)
+    ? (planId as RedeemCodePlanId)
+    : "pro_monthly";
 }
 
 function getStatusCode(error: unknown) {

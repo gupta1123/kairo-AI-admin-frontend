@@ -53,6 +53,10 @@ export default async function RedeemCodesPage({ searchParams }: RedeemCodePagePr
             basePath="/redeem-codes"
             page={result.page}
             pageSize={result.pageSize}
+            queryParams={{
+              search,
+              status: status !== "all" ? status : undefined
+            }}
             total={result.total}
           />
         </>

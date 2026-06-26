@@ -2,6 +2,8 @@ import type { ComponentType, SVGProps } from "react";
 
 export type RedeemCodeStatus = "active" | "used" | "expired" | "revoked";
 
+export type RedeemCodePlanId = "pro_monthly" | "pro_yearly";
+
 export type SubscriptionPlan = "free" | "pro";
 
 export type SubscriptionStatus =
@@ -39,7 +41,8 @@ export type RedeemCodeSummary = {
   id: string;
   codePreview: string;
   status: RedeemCodeStatus;
-  planGrant: "pro_monthly";
+  planGrant: RedeemCodePlanId;
+  planId?: RedeemCodePlanId;
   durationDays: number;
   createdAt: string;
   expiresAt: string;

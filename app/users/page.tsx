@@ -79,6 +79,10 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
             basePath="/users"
             page={result.page}
             pageSize={result.pageSize}
+            queryParams={{
+              search,
+              plan: plan !== "all" ? plan : undefined
+            }}
             total={result.total}
           />
         </>

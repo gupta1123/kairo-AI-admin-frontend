@@ -2,12 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 
 export function LoginForm({ nextPath }: { nextPath: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,15 +67,25 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
 
       <label className="mt-4 block text-sm font-extrabold text-stone-700">
         Password
-        <input
-          autoComplete="current-password"
-          className="mt-2 h-11 w-full rounded-md border border-stone-200 bg-stone-50 px-3 text-sm font-semibold text-stone-950 outline-none transition focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
-          name="password"
-          onChange={(event) => setPassword(event.target.value)}
-          required
-          type="password"
-          value={password}
-        />
+        <span className="relative mt-2 block">
+          <input
+            autoComplete="current-password"
+            className="h-11 w-full rounded-md border border-stone-200 bg-stone-50 px-3 pr-11 text-sm font-semibold text-stone-950 outline-none transition focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
+            name="password"
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            type={showPassword ? "text" : "password"}
+            value={password}
+          />
+          <button
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 focus:outline-none focus:ring-2 focus:ring-teal-100"
+            onClick={() => setShowPassword((current) => !current)}
+            type="button"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </span>
       </label>
 
       {error ? (
